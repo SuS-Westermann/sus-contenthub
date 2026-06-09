@@ -168,15 +168,19 @@
   .x360-foot{
     border-top:1px solid var(--border);
     padding:14px 20px;
-    text-align:center;
+    text-align:left;
   }
   .x360-foot a{
     font-size:13.5px;
     font-weight:700;
     color:var(--orange);
     text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
   }
   .x360-foot a:hover{text-decoration:underline;}
+  .x360-foot a svg{width:14px;height:14px;}
 
   /* ---------- Status (Laden / Fehler) ---------- */
   .x360-state{
@@ -234,7 +238,10 @@
     </div>
 
     <div class="x360-foot">
-      <a id="x360-all" href="#" target="_blank" rel="noopener">Alle Blogbeiträge anzeigen</a>
+      <a id="x360-all" href="#" target="_blank" rel="noopener">
+        Alle Blogbeiträge anzeigen
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>
+      </a>
     </div>
   </section>
 
