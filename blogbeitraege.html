@@ -46,7 +46,7 @@
   html,body{height:auto;}
   body{
     margin:0;
-    padding:0;
+    padding:14px;               /* etwas Luft, damit Rundung + Schatten sichtbar sind */
     overflow:hidden;            /* kein interner Scrollbalken */
     font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
     color:var(--lila);
@@ -61,6 +61,7 @@
     background:var(--weiss);
     border:1px solid var(--border);
     border-radius:16px;
+    box-shadow:0 6px 22px rgba(27,10,50,.07);
     overflow:hidden;
   }
 
