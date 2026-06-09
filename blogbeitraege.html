@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neueste Blogbeiträge – Haufe X360</title>
+
+<!-- =====================================================================
+     KONFIGURATION  –  bei Bedarf hier anpassen
+     ===================================================================== -->
+<script>
+  const CONFIG = {
+    // RSS-Feed mit den Blogbeiträgen
+    FEED_URL:   "https://www.softwarepartner.net/share/haufex360.xml",
+    // Ziel der "Mehr anzeigen" / "Alle Blogbeiträge"-Links
+    BLOG_URL:   "https://www.softwarepartner.net/blog",
+    // Anzahl der angezeigten Beiträge
+    MAX_ITEMS:  5,
+    // CORS-Proxys (werden der Reihe nach probiert, falls einer nicht antwortet)
+    PROXIES: [
+      url => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
+      url => "https://corsproxy.io/?url=" + encodeURIComponent(url),
+      url => "https://thingproxy.freeboard.io/fetch/" + url
+    ]
+  };
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --orange:#FC7506;
+    --lila:#1B0A32;
+    --weiss:#FFFFFF;
+    --orange-hell:#FFB380;
+    --lavendel:#B6A2DE;
+    --hellgrau:#F5F2F0;
+    --text-muted:#6B6678;
+    --border:#ECE9F0;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    padding:16px;
+    font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    color:var(--lila);
+    background:transparent;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .x360-card{
+    width:100%;
+    max-width:560px;
+    margin:0 auto;
+    background:var(--weiss);
+    border:1px solid var(--border);
+    border-radius:16px;
+    box-shadow:0 6px 24px rgba(27,10,50,.06);
+    overflow:hidden;
+  }
+
+  /* ---------- Kopfzeile ---------- */
+  .x360-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:18px 20px 14px;
+  }
+  .x360-head-title{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+  }
+  .x360-rss-ico{
+    flex:0 0 auto;
+    width:26px;height:26px;
+    border-radius:7px;
+    background:var(--orange);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .x360-rss-ico svg{width:14px;height:14px;}
+  .x360-head h2{
+    margin:0;
+    font-size:13.5px;
+    font-weight:800;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--lila);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .x360-more{
+    flex:0 0 auto;
+    font-size:13px;
+    font-weight:700;
+    color:var(--orange);
+    text-decoration:none;
+    white-space:nowrap;
+  }
+  .x360-more:hover{text-decoration:underline;}
+
+  /* ---------- Liste ---------- */
+  .x360-list{list-style:none;margin:0;padding:0;}
+  .x360-item{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:13px 20px;
+    text-decoration:none;
+    color:inherit;
+    border-top:1px solid var(--border);
+    transition:background .15s ease;
+  }
+  .x360-item:hover{background:var(--hellgrau);}
+
+  .x360-thumb{
+    flex:0 0 auto;
+    width:74px;height:56px;
+    border-radius:8px;
+    object-fit:cover;
+    background:var(--hellgrau);
+  }
+  .x360-body{flex:1 1 auto;min-width:0;}
+  .x360-title{
+    font-size:14px;
+    font-weight:700;
+    line-height:1.35;
+    color:var(--lila);
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+  .x360-item:hover .x360-title{color:var(--orange);}
+  .x360-meta{
+    margin-top:5px;
+    font-size:12px;
+    font-weight:500;
+    color:var(--text-muted);
+    display:flex;
+    align-items:center;
+    gap:7px;
+    flex-wrap:wrap;
+  }
+  .x360-cat{
+    color:var(--orange);
+    font-weight:700;
+  }
+  .x360-dot{color:var(--lavendel);}
+  .x360-chev{
+    flex:0 0 auto;
+    color:var(--lavendel);
+    width:16px;height:16px;
+  }
+  .x360-item:hover .x360-chev{color:var(--orange);}
+
+  /* ---------- Fußzeile ---------- */
+  .x360-foot{
+    border-top:1px solid var(--border);
+    padding:14px 20px;
+    text-align:center;
+  }
+  .x360-foot a{
+    font-size:13.5px;
+    font-weight:700;
+    color:var(--orange);
+    text-decoration:none;
+  }
+  .x360-foot a:hover{text-decoration:underline;}
+
+  /* ---------- Status (Laden / Fehler) ---------- */
+  .x360-state{
+    padding:26px 20px;
+    text-align:center;
+    color:var(--text-muted);
+    font-size:13.5px;
+  }
+  .x360-spinner{
+    width:22px;height:22px;
+    margin:0 auto 10px;
+    border:3px solid var(--border);
+    border-top-color:var(--orange);
+    border-radius:50%;
+    animation:x360spin .8s linear infinite;
+  }
+  @keyframes x360spin{to{transform:rotate(360deg);}}
+
+  /* Skeleton-Platzhalter beim Laden */
+  .sk-item{display:flex;gap:14px;padding:13px 20px;border-top:1px solid var(--border);}
+  .sk-thumb{width:74px;height:56px;border-radius:8px;}
+  .sk-lines{flex:1;}
+  .sk-line{height:11px;border-radius:6px;margin-bottom:8px;}
+  .sk-line.w90{width:90%;} .sk-line.w70{width:70%;} .sk-line.w40{width:40%;}
+  .sk-thumb,.sk-line{
+    background:linear-gradient(90deg,var(--hellgrau) 25%,#efeaf2 37%,var(--hellgrau) 63%);
+    background-size:400% 100%;
+    animation:sk 1.2s ease infinite;
+  }
+  @keyframes sk{0%{background-position:100% 0;}100%{background-position:-100% 0;}}
+</style>
+</head>
+
+<body>
+  <section class="x360-card" aria-label="Neueste Blogbeiträge">
+    <div class="x360-head">
+      <div class="x360-head-title">
+        <span class="x360-rss-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="6" cy="18" r="2.2" fill="#fff"/>
+            <path d="M4 11.5a8.5 8.5 0 0 1 8.5 8.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M4 5a15 15 0 0 1 15 15" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <h2>Neueste Blogbeiträge</h2>
+      </div>
+      <a class="x360-more" id="x360-more" href="#" target="_blank" rel="noopener">Mehr anzeigen</a>
+    </div>
+
+    <div id="x360-content">
+      <!-- Skeleton beim Laden -->
+      <div class="sk-item"><div class="sk-thumb"></div><div class="sk-lines"><div class="sk-line w90"></div><div class="sk-line w70"></div><div class="sk-line w40"></div></div></div>
+      <div class="sk-item"><div class="sk-thumb"></div><div class="sk-lines"><div class="sk-line w90"></div><div class="sk-line w70"></div><div class="sk-line w40"></div></div></div>
+      <div class="sk-item"><div class="sk-thumb"></div><div class="sk-lines"><div class="sk-line w90"></div><div class="sk-line w70"></div><div class="sk-line w40"></div></div></div>
+    </div>
+
+    <div class="x360-foot">
+      <a id="x360-all" href="#" target="_blank" rel="noopener">Alle Blogbeiträge anzeigen</a>
+    </div>
+  </section>
+
+<script>
+(function(){
+  "use strict";
+
+  document.getElementById("x360-more").href = CONFIG.BLOG_URL;
+  document.getElementById("x360-all").href  = CONFIG.BLOG_URL;
+
+  const content = document.getElementById("x360-content");
+
+  // ---- Hilfsfunktionen -------------------------------------------------
+  function fmtDate(str){
+    const d = new Date(str);
+    if (isNaN(d)) return "";
+    return d.toLocaleDateString("de-DE", {day:"2-digit", month:"2-digit", year:"numeric"});
+  }
+
+  function decode(str){
+    const t = document.createElement("textarea");
+    t.innerHTML = str || "";
+    return t.value;
+  }
+
+  // Kategorie aus dem Titel ableiten (der Feed liefert keine Kategorien).
+  // Reihenfolge = Priorität. Bei Bedarf einfach anpassen.
+  function deriveCategory(title){
+    const t = (title || "").toLowerCase();
+    if (/woocommerce|synchronisier|schnittstelle|exchange|procuros|d-velop|d.velop|partneranbindung|sync/.test(t)) return "Schnittstellen";
+    if (/odata|integrat|excel|api|automatis/.test(t)) return "Integrationen";
+    if (/update|release|funktion|version|optimierung|neuerung/.test(t)) return "Produktupdates";
+    if (/buchhaltung|fibu|rechnung|zugferd|xrechnung|peppol|steuer|eust|zahlung|order-to-cash|o2c|bezugsneben|kalkulation/.test(t)) return "Buchhaltung";
+    if (/produktion|pps|mrp|warenwirtschaft|lager|drp|distribution/.test(t)) return "Produktion";
+    if (/erp|cloud|mittelstand|mobile app|ki|crm/.test(t)) return "Cloud-ERP";
+    return "Haufe X360";
+  }
+
+  // Bild aus einem <item> herausholen (media:content, enclosure, oder aus dem Text)
+  function extractImage(item){
+    const media = item.getElementsByTagName("media:content")[0]
+               || item.querySelector("content");
+    if (media && media.getAttribute("url")) return media.getAttribute("url");
+
+    const enc = item.querySelector("enclosure");
+    if (enc && enc.getAttribute("url")) return enc.getAttribute("url");
+
+    const desc = (item.querySelector("description") || {}).textContent || "";
+    const m = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+    if (m) return m[1];
+
+    return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="74" height="56"><rect width="74" height="56" fill="#F5F2F0"/></svg>');
+  }
+
+  // ---- Feed holen (mit Proxy-Fallback) ---------------------------------
+  async function fetchWithTimeout(url, ms){
+    const ctrl = new AbortController();
+    const id = setTimeout(() => ctrl.abort(), ms);
+    try{
+      const res = await fetch(url, {signal: ctrl.signal, cache:"no-store"});
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      return await res.text();
+    } finally { clearTimeout(id); }
+  }
+
+  async function loadFeed(){
+    let lastErr;
+    for (const makeUrl of CONFIG.PROXIES){
+      try{
+        const text = await fetchWithTimeout(makeUrl(CONFIG.FEED_URL), 9000);
+        const xml  = new DOMParser().parseFromString(text, "text/xml");
+        if (xml.querySelector("parsererror")) throw new Error("XML parse error");
+        const items = xml.querySelectorAll("item, entry");
+        if (!items.length) throw new Error("Keine Beiträge gefunden");
+        return items;
+      } catch(e){ lastErr = e; /* nächsten Proxy versuchen */ }
+    }
+    throw lastErr || new Error("Feed nicht erreichbar");
+  }
+
+  function render(items){
+    const list = document.createElement("ul");
+    list.className = "x360-list";
+
+    const count = Math.min(CONFIG.MAX_ITEMS, items.length);
+    for (let i = 0; i < count; i++){
+      const item  = items[i];
+      const title = decode((item.querySelector("title")||{}).textContent || "");
+      const linkEl= item.querySelector("link");
+      let   link  = linkEl ? (linkEl.getAttribute("href") || linkEl.textContent) : CONFIG.BLOG_URL;
+      const date  = fmtDate((item.querySelector("pubDate, published, updated")||{}).textContent || "");
+      const img   = extractImage(item);
+      const cat   = deriveCategory(title);
+
+      const a = document.createElement("a");
+      a.className = "x360-item";
+      a.href = link;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.innerHTML =
+        '<img class="x360-thumb" loading="lazy" alt="" src="'+img+'" ' +
+          'onerror="this.style.visibility=\'hidden\'">' +
+        '<div class="x360-body">' +
+          '<div class="x360-title">'+title+'</div>' +
+          '<div class="x360-meta">' +
+            (date ? '<span>'+date+'</span><span class="x360-dot">·</span>' : '') +
+            '<span class="x360-cat">'+cat+'</span>' +
+          '</div>' +
+        '</div>' +
+        '<svg class="x360-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
+      list.appendChild(a);
+    }
+
+    content.innerHTML = "";
+    content.appendChild(list);
+  }
+
+  function showError(){
+    content.innerHTML =
+      '<div class="x360-state">' +
+      'Die Blogbeiträge konnten gerade nicht geladen werden.<br>' +
+      '<a href="'+CONFIG.BLOG_URL+'" target="_blank" rel="noopener" style="color:var(--orange);font-weight:700;text-decoration:none;">Zum Blog &rarr;</a>' +
+      '</div>';
+  }
+
+  loadFeed().then(render).catch(err => { console.error(err); showError(); });
+})();
+</script>
+</body>
+</html>
