@@ -50,9 +50,11 @@
 
   *{box-sizing:border-box;}
 
+  html,body{height:auto;}
   body{
     margin:0;
-    padding:16px;
+    padding:0;
+    overflow:hidden;            /* kein interner Scrollbalken */
     font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
     color:var(--lila);
     background:transparent;
@@ -60,13 +62,12 @@
   }
 
   .x360-card{
-    width:100%;
-    max-width:760px;
-    margin:0 auto;
+    width:100%;                 /* füllt die volle Breite -> passt sich der Seite an */
+    max-width:none;
+    margin:0;
     background:var(--weiss);
     border:1px solid var(--border);
-    border-radius:16px;
-    box-shadow:0 6px 24px rgba(27,10,50,.06);
+    border-radius:0;
     overflow:hidden;
   }
 
@@ -177,6 +178,7 @@
     color:var(--lila);
     display:-webkit-box;
     -webkit-line-clamp:2;
+    line-clamp:2;
     -webkit-box-orient:vertical;
     overflow:hidden;
   }
@@ -253,6 +255,18 @@
   const content  = document.getElementById("x360-content");
   const shuffleBtn = document.getElementById("x360-shuffle");
   document.getElementById("x360-playlist").href = CONFIG.PLAYLIST_URL;
+
+  // Tatsächliche Inhaltshöhe an die einbettende Seite melden (für Auto-Resize des iframes)
+  function reportHeight(){
+    const h = Math.max(
+      document.documentElement.scrollHeight,
+      document.body ? document.body.scrollHeight : 0
+    );
+    try { parent.postMessage({ x360: "height", page: "videos", height: h }, "*"); } catch(e){}
+  }
+  window.addEventListener("load", reportHeight);
+  window.addEventListener("resize", reportHeight);
+  if (window.ResizeObserver){ new ResizeObserver(reportHeight).observe(document.documentElement); }
 
   let allVideos = [];   // gesamte geladene Liste {id,title,thumb,published,duration}
   let mode = "newest";  // "newest" | "random"
@@ -410,6 +424,7 @@
 
     content.innerHTML = "";
     content.appendChild(grid);
+    reportHeight();
   }
 
   function showError(){
@@ -418,6 +433,7 @@
       'Die Videos konnten gerade nicht geladen werden.<br>' +
       '<a href="'+CONFIG.PLAYLIST_URL+'" target="_blank" rel="noopener">Zur Playlist auf YouTube &rarr;</a>' +
       '</div>';
+    reportHeight();
   }
 
   shuffleBtn.addEventListener("click", ()=>{
